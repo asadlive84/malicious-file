@@ -1,0 +1,46 @@
+// Open the PDF file.
+	file, err := os.Open(inputPath)
+	if err != nil {
+		fmt.Printf("1 Error %+v", err)
+		log.Fatalf("Error opening PDF file: %v", err)
+	}
+	defer file.Close()
+
+	// Validate the PDF file.
+	isValidPdf := true
+	if err := api.ValidateFile(inputPath, nil); err != nil {
+		// fmt.Printf("2 Error %+v", err)
+		isValidPdf = false
+		// log.Fatalf("Error validating PDF: %v", err)
+	}
+
+	if !isValidPdf {
+		fmt.Println("#####################INVALID PDF#################################")
+		return
+	}
+
+	// Create a default configuration.
+	config := model.NewDefaultConfiguration()
+	// config1 := api.LoadConfiguration()
+
+	// Read the PDF content.
+	ctx, err := pdfcpu.Read(file, config)
+	if err != nil {
+		fmt.Printf("3 Error %+v", err)
+		log.Fatalf("Error reading PDF: %v", err)
+	}
+
+	// Iterate over pages and extract text.
+	if err := ctx.EnsurePageCount(); err != nil {
+		fmt.Printf("4 Error %+v", err)
+		log.Fatalf("Error ensuring page count: %v", err)
+	}
+
+	for pageNum := 1; pageNum <= ctx.PageCount; pageNum++ {
+		text, err := api.ReadContext(file, config)
+		if err != nil {
+			log.Fatalf("Error extracting text from page %d: %v", pageNum, err)
+		}
+
+		fmt.Printf("Text from page %d:\n%s\n", pageNum, text)
+	}
